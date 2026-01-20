@@ -1,21 +1,34 @@
 import { useState, useEffect } from 'react'
-import { Pet } from './components/Pet/Pet'
-import { ActionButtons } from './components/ActionButtons/ActionButtons'
 import { IntroScreen } from './components/IntroScreen/IntroScreen'
 import { DiagonalWipe } from './components/DiagonalWipe/DiagonalWipe'
+import { Header } from './components/Header/Header'
+import { PetSidebar } from './components/PetSidebar/PetSidebar'
+import { ContentArea } from './components/ContentArea/ContentArea'
+import { Navigation } from './components/Navigation/Navigation'
 import { usePetStore } from './stores/petStore'
+import { useThemeStore } from './stores/themeStore'
 import { useGameLoop } from './hooks/useGameLoop'
 
 function App() {
   const pet = usePetStore((state) => state.pet)
   const createPet = usePetStore((state) => state.createPet)
+  const theme = useThemeStore((state) => state.theme)
 
   // Show intro if no pet exists
   const [showIntro, setShowIntro] = useState(!pet)
-  const [isAnimating, setIsAnimating] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(true)
 
   // Start game loop when pet exists
   useGameLoop()
+
+  // Apply dark mode class to document
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [theme])
 
   const handleStart = (data: { name: string; emoji: string }) => {
     // Create the pet in the store
@@ -45,31 +58,27 @@ function App() {
     }
   }
 
-  // Game screen component
-  const gameScreen = (
-    <div className="fixed inset-0 bg-gradient-to-br from-green-100 via-emerald-50 to-teal-100 overflow-y-auto">
-      <div className="min-h-screen flex flex-col items-center justify-center py-8 px-4">
-        {/* Header with reset button */}
-        <div className="w-full max-w-3xl mx-auto mb-8 flex items-center justify-between">
-          <h1 className="text-4xl font-bold text-green-800">
-            LocalPet 🌿
-          </h1>
+  // Main app layout with navigation
+  const mainLayout = (
+    <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-green-100 via-emerald-50 to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Header */}
+      <Header onReset={handleReset} />
 
-          <button
-            onClick={handleReset}
-            className="bg-white/80 hover:bg-white border-2 border-green-300 hover:border-green-500 text-green-700 font-semibold px-4 py-2 rounded-xl transition-all hover:shadow-lg"
-          >
-            Choose Different Pet
-          </button>
-        </div>
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Pet Sidebar (Desktop only) */}
+        <PetSidebar />
 
-        <div className="w-full max-w-3xl mx-auto">
-          <Pet />
-
-          <div className="mt-8">
-            <ActionButtons />
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          {/* Mobile Navigation */}
+          <div className="md:hidden p-4">
+            <Navigation />
           </div>
-        </div>
+
+          {/* Content Area */}
+          <ContentArea />
+        </main>
       </div>
     </div>
   )
@@ -79,10 +88,10 @@ function App() {
     return <IntroScreen onStart={handleStart} />
   }
 
-  // After pet is selected, show game screen with diagonal wipe animation
+  // After pet is selected, show main layout with diagonal wipe animation
   return (
     <>
-      {gameScreen}
+      {mainLayout}
       {/* DiagonalWipe covers screen initially, then slides open like elevator doors */}
       <DiagonalWipe isAnimating={isAnimating} onComplete={handleAnimationComplete} />
     </>

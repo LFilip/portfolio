@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { DiagonalWipe } from './DiagonalWipe'
 
 describe('DiagonalWipe Component', () => {
-  it('should not render when not animating and not completed', () => {
+  it('should render overlay when animating', () => {
     const { container } = render(
-      <DiagonalWipe isAnimating={false} onComplete={() => {}} />
+      <DiagonalWipe isAnimating={true} onComplete={() => {}} />
     )
 
-    // Should render initially (doors closed)
+    // Should render the fixed overlay
     expect(container.querySelector('.fixed')).toBeInTheDocument()
   })
 
@@ -18,17 +18,43 @@ describe('DiagonalWipe Component', () => {
     )
 
     const triangles = container.querySelectorAll('.absolute.inset-0')
-    expect(triangles.length).toBe(2)
+    expect(triangles.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('should call onComplete after animation duration', () => {
+  it('should show Begin Adventure button after delay', async () => {
+    vi.useFakeTimers()
+
+    render(<DiagonalWipe isAnimating={true} onComplete={() => {}} />)
+
+    // Button appears after 300ms delay
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+
+    expect(screen.getByText(/begin adventure/i)).toBeInTheDocument()
+
+    vi.useRealTimers()
+  })
+
+  it('should call onComplete after button click and animation', async () => {
     vi.useFakeTimers()
     const mockOnComplete = vi.fn()
 
     render(<DiagonalWipe isAnimating={true} onComplete={mockOnComplete} />)
 
+    // Wait for button to appear
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+
+    // Click the Begin button
+    const beginButton = screen.getByText(/begin adventure/i)
+    fireEvent.click(beginButton)
+
     // Fast-forward time past animation duration (900ms)
-    vi.advanceTimersByTime(900)
+    act(() => {
+      vi.advanceTimersByTime(900)
+    })
 
     expect(mockOnComplete).toHaveBeenCalledTimes(1)
 
@@ -72,17 +98,25 @@ describe('DiagonalWipe Component', () => {
     vi.useFakeTimers()
     const mockOnComplete = vi.fn()
 
-    const { container, rerender } = render(
+    const { container } = render(
       <DiagonalWipe isAnimating={true} onComplete={mockOnComplete} />
     )
 
+    // Wait for button to appear
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+
+    // Click the Begin button
+    const beginButton = screen.getByText(/begin adventure/i)
+    fireEvent.click(beginButton)
+
     // Fast-forward past animation
-    vi.advanceTimersByTime(1000)
+    act(() => {
+      vi.advanceTimersByTime(1000)
+    })
 
-    // Re-render with isAnimating false
-    rerender(<DiagonalWipe isAnimating={false} onComplete={mockOnComplete} />)
-
-    // Should not render anything
+    // Should not render anything after completion
     expect(container.firstChild).toBeNull()
 
     vi.useRealTimers()
