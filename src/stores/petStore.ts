@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Pet, PetStats } from '../types/pet'
+import type { Pet } from '../types/pet'
 
 interface PetState {
   pet: Pet | null

@@ -1,5 +1,4 @@
 import '@testing-library/jest-dom'
-import { vi } from 'vitest'
 
 // Mock localStorage for Zustand persist
 // Vitest runs in Node.js which doesn't have browser APIs like localStorage.
